@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="th" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DCA Wealth Pro Analytics | ระบบจำลองการลงทุนและคำนวณเงินเฟ้อระดับมืออาชีพ</title>
+  
+  <!-- Google Fonts: Prompt & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Chart.js 4.4 CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <script>
+    tailwind.config = {
+      darkMode: ['selector', '[data-theme="dark"]'],
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Prompt', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* CSS Custom Properties for Central Theme Management */
+    :root[data-theme="dark"] {
+      --bg-base: #0B0F19;
+      --bg-surface: rgba(15, 23, 42, 0.75);
+      --bg-surface-elevated: rgba(30, 41, 59, 0.7);
+      --bg-input: #080C14;
+      --bg-badge: rgba(99, 102, 241, 0.15);
+      --border-color: rgba(51, 65, 85, 0.6);
+      --border-subtle: rgba(51, 65, 85, 0.35);
+      --border-focus: #818CF8;
+      --text-main: #F8FAFC;
+      --text-muted: #94A3B8;
+      --text-sub: #64748B;
+      --accent-indigo: #818CF8;
+      --accent-indigo-glow: rgba(99, 102, 241, 0.28);
+      --accent-emerald: #10B981;
+      --accent-emerald-glow: rgba(16, 185, 129, 0.25);
+      --accent-amber: #F59E0B;
+      --accent-rose: #F43F5E;
+      --shadow-card: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+      --shadow-hover: 0 20px 30px -10px rgba(0, 0, 0, 0.5), 0 0 20px -5px rgba(99, 102, 241, 0.2);
+      --chart-grid: rgba(51, 65, 85, 0.25);
+      --chart-text: #94A3B8;
+      --chart-tooltip-bg: rgba(15, 23, 42, 0.96);
+      --chart-tooltip-border: rgba(51, 65, 85, 0.8);
+      --chart-tooltip-text: #F8FAFC;
+    }
+
+    :root[data-theme="light"] {
+      --bg-base: #F8FAFC;
+      --bg-surface: rgba(255, 255, 255, 0.92);
+      --bg-surface-elevated: #FFFFFF;
+      --bg-input: #F1F5F9;
+      --bg-badge: rgba(79, 70, 229, 0.08);
+      --border-color: #E2E8F0;
+      --border-subtle: #F1F5F9;
+      --border-focus: #6366F1;
+      --text-main: #0F172A;
+      --text-muted: #475569;
+      --text-sub: #64748B;
+      --accent-indigo: #4F46E5;
+      --accent-indigo-glow: rgba(79, 70, 229, 0.15);
+      --accent-emerald: #059669;
+      --accent-emerald-glow: rgba(5, 150, 105, 0.15);
+      --accent-amber: #D97706;
+      --accent-rose: #E11D48;
+      --shadow-card: 0 4px 6px -1px rgba(15, 23, 42, 0.04), 0 2px 4px -2px rgba(15, 23, 42, 0.03);
+      --shadow-hover: 0 16px 24px -4px rgba(15, 23, 42, 0.08), 0 4px 8px -2px rgba(15, 23, 42, 0.03);
+      --chart-grid: rgba(226, 232, 240, 0.85);
+      --chart-text: #475569;
+      --chart-tooltip-bg: rgba(255, 255, 255, 0.98);
+      --chart-tooltip-border: #CBD5E1;
+      --chart-tooltip-text: #0F172A;
+    }
+
+    /* Base Body Styling */
+    body {
+      font-family: 'Prompt', sans-serif;
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      min-height: 100vh;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    /* Ambient Decorative Gradients */
+    .theme-gradient-mesh {
+      background-image: 
+        radial-gradient(at 10% 10%, rgba(99, 102, 241, 0.12) 0px, transparent 55%),
+        radial-gradient(at 90% 90%, rgba(16, 185, 129, 0.08) 0px, transparent 55%);
+    }
+    :root[data-theme="light"] .theme-gradient-mesh {
+      background-image: 
+        radial-gradient(at 10% 10%, rgba(99, 102, 241, 0.05) 0px, transparent 55%),
+        radial-gradient(at 90% 90%, rgba(16, 185, 129, 0.04) 0px, transparent 55%);
+    }
+
+    /* Smooth Micro-interactions */
+    .card-glass {
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-card);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease, border-color 0.25s ease;
+    }
+    .card-glass:hover {
+      transform: translateY(-2.5px);
+      box-shadow: var(--shadow-hover);
+    }
+
+    /* Sliders Styling */
+    input[type=range] {
+      -webkit-appearance: none;
+      height: 6px;
+      border-radius: 9999px;
+      background: var(--border-color);
+      outline: none;
+      transition: background 0.2s ease;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--accent-indigo);
+      cursor: pointer;
+      border: 2px solid var(--bg-base);
+      transition: transform 0.15s ease-in-out, box-shadow 0.15s ease;
+      box-shadow: 0 0 10px var(--accent-indigo-glow);
+    }
+    input[type=range]::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+    }
+    input[type=range]::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--accent-indigo);
+      cursor: pointer;
+      border: 2px solid var(--bg-base);
+    }
+
+    /* Hide number spinner */
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button { 
+      -webkit-appearance: none; 
+      margin: 0; 
+    }
+    input[type=number] {
+      -moz-appearance: textfield;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg-base); }
+    ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-sub); }
+
+    /* Animated Toast Notification */
+    @keyframes toastSlide {
+      from { transform: translateY(-120%) translateX(-50%); opacity: 0; }
+      to { transform: translateY(0) translateX(-50%); opacity: 1; }
+    }
+    .toast-animate {
+      animation: toastSlide 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+  </style>
+</head>
+<body class="theme-gradient-mesh p-3 sm:p-6 lg:p-8 antialiased selection:bg-indigo-500/30 selection:text-indigo-300">
+
+  <!-- Toast Container -->
+  <div id="toastContainer" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-2 pointer-events-none w-11/12 max-w-md"></div>
+
+  <div class="max-w-7xl mx-auto space-y-6">
+    
+    <!-- Top Navigation Header -->
+    <header class="flex flex-col md:flex-row md:items-center justify-between pb-5 border-b border-[var(--border-color)] gap-4 transition-colors">
+      
+      <!-- Brand & Title -->
+      <div class="flex items-center gap-3.5">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-emerald-400 p-[1.5px] shadow-lg flex items-center justify-center">
+          <div class="w-full h-full bg-[var(--bg-base)] rounded-[14px] flex items-center justify-center transition-colors">
+            <i data-lucide="trending-up" class="w-6 h-6 text-indigo-500"></i>
+          </div>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-[var(--text-main)]">DCA Wealth Pro Analytics</h1>
+            <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[var(--bg-badge)] text-[var(--accent-indigo)] border border-indigo-500/30">PRO EDITION</span>
+          </div>
+          <p class="text-xs sm:text-sm text-[var(--text-muted)]">แบบจำลองดอกเบี้ยทบต้นรายเดือน วิเคราะห์เงินเฟ้อ และวัดผลตอบแทนเชิงลึก</p>
+        </div>
+      </div>
+
+      <!-- Action Deck: Presets + Dark/Light Toggle -->
+      <div class="flex flex-wrap items-center gap-2.5">
+        
+        <!-- Presets Group -->
+        <div class="flex items-center gap-1.5 bg-[var(--bg-surface)] p-1 rounded-2xl border border-[var(--border-color)] shadow-sm">
+          <button type="button" onclick="UIController.applyPreset('world_index')" class="text-xs px-2.5 sm:px-3 py-1.5 rounded-xl hover:bg-indigo-500/10 hover:text-[var(--accent-indigo)] text-[var(--text-muted)] transition-all font-medium flex items-center gap-1">
+            <span>🌍 ดัชนีโลก (8%)</span>
+          </button>
+          <button type="button" onclick="UIController.applyPreset('growth_tech')" class="text-xs px-2.5 sm:px-3 py-1.5 rounded-xl hover:bg-indigo-500/10 hover:text-[var(--accent-indigo)] text-[var(--text-muted)] transition-all font-medium flex items-center gap-1">
+            <span>🚀 หุ้นเติบโต (12%)</span>
+          </button>
+          <button type="button" onclick="UIController.applyPreset('conservative')" class="text-xs px-2.5 sm:px-3 py-1.5 rounded-xl hover:bg-indigo-500/10 hover:text-[var(--accent-indigo)] text-[var(--text-muted)] transition-all font-medium flex items-center gap-1">
+            <span>🛡️ สมดุล (4.5%)</span>
+          </button>
+        </div>
+
+        <!-- Glassmorphic Theme Toggle Component -->
+        <button 
+          type="button" 
+          id="themeToggleBtn"
+          onclick="ThemeManager.toggle()" 
+          title="สลับโหมดมืด / สว่าง (Dark/Light Theme)"
+          class="flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-color)] shadow-sm hover:border-[var(--border-focus)] transition-all group"
+        >
+          <div class="relative w-11 h-6 rounded-full bg-[var(--bg-input)] border border-[var(--border-color)] p-0.5 transition-colors">
+            <div id="themeToggleThumb" class="w-4 h-4 rounded-full bg-[var(--accent-indigo)] transform transition-transform duration-300 ease-out flex items-center justify-center text-white shadow-sm">
+              <i id="themeThumbIcon" data-lucide="moon" class="w-2.5 h-2.5"></i>
+            </div>
+          </div>
+          <span id="themeLabelText" class="text-xs font-medium text-[var(--text-muted)] group-hover:text-[var(--text-main)] transition-colors select-none">
+            โหมดมืด
+          </span>
+        </button>
+
+      </div>
+    </header>
+
+    <!-- Main Grid Layout (2-Column Responsive) -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      
+      <!-- Left Column: Input Control Deck (5 cols) -->
+      <div class="lg:col-span-5 card-glass rounded-3xl p-5 sm:p-6 relative">
+        <div class="flex items-center justify-between pb-4 mb-5 border-b border-[var(--border-color)]">
+          <div class="flex items-center gap-2.5">
+            <div class="p-2 rounded-xl bg-[var(--bg-badge)] text-[var(--accent-indigo)]">
+              <i data-lucide="sliders" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <h2 class="text-base sm:text-lg font-semibold text-[var(--text-main)]">พารามิเตอร์การลงทุน</h2>
+              <p class="text-[11px] text-[var(--text-muted)]">บันทึกค่าลงเครื่องอัตโนมัติ (State Persisted)</p>
+            </div>
+          </div>
+          <button type="button" onclick="UIController.resetDefaults()" class="text-xs text-[var(--text-muted)] hover:text-[var(--accent-indigo)] transition-colors flex items-center gap-1">
+            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> คืนค่าเริ่มต้น
+          </button>
+        </div>
+
+        <form id="calculatorForm" class="space-y-5" onsubmit="event.preventDefault();">
+          
+          <!-- 1. Initial Deposit -->
+          <div class="space-y-2">
+            <div class="flex justify-between items-center text-sm">
+              <label for="initialDeposit" class="font-medium text-[var(--text-main)] flex items-center gap-1.5">
+                <i data-lucide="wallet" class="w-4 h-4 text-[var(--accent-indigo)]"></i> เงินลงทุนเริ่มต้น
+              </label>
+              <div class="flex items-center bg-[var(--bg-input)] px-3 py-1 rounded-xl border border-[var(--border-color)] focus-within:border-[var(--border-focus)] transition-colors">
+                <span class="text-xs text-[var(--text-muted)] mr-1.5 font-mono">฿</span>
+                <input type="number" id="initialDeposit" min="0" max="100000000" step="1000" value="50000" class="w-28 text-right bg-transparent text-[var(--text-main)] font-semibold focus:outline-none text-sm font-mono">
+              </div>
+            </div>
+            <input type="range" id="initialDepositSlider" min="0" max="1000000" step="5000" value="50000" class="w-full cursor-pointer">
+            <div class="flex justify-between text-[11px] text-[var(--text-muted)] font-mono">
+              <span>฿0</span>
+              <span>฿500,000</span>
+              <span>฿1,000,000</span>
+            </div>
+          </div>
+
+          <!-- 2. Monthly Contribution -->
+          <div class="space-y-2">
+            <div class="flex justify-between items-center text-sm">
+              <label for="monthlyDeposit" class="font-medium text-[var(--text-main)] flex items-center gap-1.5">
+                <i data-lucide="calendar" class="w-4 h-4 text-[var(--accent-indigo)]"></i> เงินลงทุนรายเดือน (DCA)
+              </label>
+              <div class="flex items-center bg-[var(--bg-input)] px-3 py-1 rounded-xl border border-[var(--border-color)] focus-within:border-[var(--border-focus)] transition-colors">
+                <span class="text-xs text-[var(--text-muted)] mr-1.5 font-mono">฿</span>
+                <input type="number" id="monthlyDeposit" min="0" max="5000000" step="500" value="10000" class="w-28 text-right bg-transparent text-[var(--text-main)] font-semibold focus:outline-none text-sm font-mono">
+              </div>
+            </div>
+            <input type="range" id="monthlyDepositSlider" min="0" max="100000" step="500" value="10000" class="w-full cursor-pointer">
+            <div class="flex justify-between text-[11px] text-[var(--text-muted)]">
+              <span>ปีละ <span id="badgeYearlyDeposit" class="text-[var(--accent-indigo)] font-mono font-semibold">฿120,000</span></span>
+              <span class="font-mono">สูงสุด ฿100k/ด.</span>
+            </div>
+          </div>
+
+          <!-- 3. Investment Duration -->
+          <div class="space-y-2">
+            <div class="flex justify-between items-center text-sm">
+              <label for="investmentYears" class="font-medium text-[var(--text-main)] flex items-center gap-1.5">
+                <i data-lucide="clock" class="w-4 h-4 text-[var(--accent-indigo)]"></i> ระยะเวลาลงทุน (ปี)
+              </label>
+              <div class="flex items-center bg-[var(--bg-input)] px-3 py-1 rounded-xl border border-[var(--border-color)] focus-within:border-[var(--border-focus)] transition-colors">
+                <input type="number" id="investmentYears" min="1" max="50" step="1" value="20" class="w-16 text-right bg-transparent text-[var(--text-main)] font-semibold focus:outline-none text-sm font-mono">
+                <span class="text-xs text-[var(--text-muted)] ml-1.5">ปี</span>
+              </div>
+            </div>
+            <input type="range" id="investmentYearsSlider" min="1" max="40" step="1" value="20" class="w-full cursor-pointer">
+            <div class="flex justify-between text-[11px] text-[var(--text-muted)] font-mono">
+              <span>1 ปี</span>
+              <span>20 ปี</span>
+              <span>40 ปี</span>
+            </div>
+          </div>
+
+          <!-- 4. Rates Grid: Expected Return & Inflation -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+            <!-- Expected Return -->
+            <div class="space-y-2 bg-[var(--bg-input)] p-3.5 rounded-2xl border border-[var(--border-color)]">
+              <div class="flex justify-between items-center">
+                <label for="annualReturn" class="text-xs font-medium text-[var(--text-main)] flex items-center gap-1">
+                  <i data-lucide="percent" class="w-3.5 h-3.5 text-[var(--accent-indigo)]"></i> ผลตอบแทน/ปี
+                </label>
+                <div class="flex items-center">
+                  <input type="number" id="annualReturn" min="0" max="100" step="0.1" value="8.0" class="w-14 text-right bg-transparent text-[var(--accent-indigo)] font-bold focus:outline-none text-sm font-mono">
+                  <span class="text-xs text-[var(--accent-indigo)] font-semibold">%</span>
+                </div>
+              </div>
+              <input type="range" id="annualReturnSlider" min="0" max="25" step="0.1" value="8.0" class="w-full cursor-pointer">
+              <span class="text-[10px] text-[var(--text-muted)] block text-right font-mono">ทบต้นทุกเดือน</span>
+            </div>
+
+            <!-- Inflation Rate -->
+            <div class="space-y-2 bg-[var(--bg-input)] p-3.5 rounded-2xl border border-[var(--border-color)]">
+              <div class="flex justify-between items-center">
+                <label for="inflationRate" class="text-xs font-medium text-[var(--text-main)] flex items-center gap-1">
+                  <i data-lucide="flame" class="w-3.5 h-3.5 text-amber-500"></i> เงินเฟ้อเฉลี่ย/ปี
+                </label>
+                <div class="flex items-center">
+                  <input type="number" id="inflationRate" min="0" max="30" step="0.1" value="2.5" class="w-14 text-right bg-transparent text-amber-500 font-bold focus:outline-none text-sm font-mono">
+                  <span class="text-xs text-amber-500 font-semibold">%</span>
+                </div>
+              </div>
+              <input type="range" id="inflationRateSlider" min="0" max="10" step="0.1" value="2.5" class="w-full cursor-pointer">
+              <span class="text-[10px] text-[var(--text-muted)] block text-right font-mono">ค่าเฉลี่ยไทย 2-3%</span>
+            </div>
+          </div>
+
+          <!-- Formula Info Card -->
+          <div class="bg-[var(--bg-badge)] border border-[var(--border-color)] rounded-2xl p-3.5 text-xs flex items-start gap-2.5">
+            <i data-lucide="info" class="w-4 h-4 text-[var(--accent-indigo)] flex-shrink-0 mt-0.5"></i>
+            <div class="text-[11px] leading-relaxed text-[var(--text-muted)]">
+              <strong class="text-[var(--text-main)] font-medium">Standard Financial Logic:</strong> ฝากต้นงวด (Annuity Due) แบบ Monthly Compounding และคิดลดอำนาจซื้อแท้จริง (Real Value) ตามอัตราเงินเฟ้อประจำปี
+            </div>
+          </div>
+
+        </form>
+      </div>
+
+      <!-- Right Column: Financial Cards, Chart & Table (7 cols) -->
+      <div class="lg:col-span-7 space-y-5">
+        
+        <!-- Financial Summary Cards (6 Cards Grid) -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3.5">
+          
+          <!-- Card 1: Principal Invested -->
+          <div class="card-glass rounded-2xl p-4 flex flex-col justify-between">
+            <div class="flex items-center justify-between text-[var(--text-muted)] text-xs mb-1">
+              <span class="font-medium">เงินต้นรวมที่จ่ายไป</span>
+              <i data-lucide="layers" class="w-3.5 h-3.5"></i>
+            </div>
+            <div id="cardTotalInvested" class="text-xl sm:text-2xl font-bold text-[var(--text-main)] font-mono tracking-tight">฿0</div>
+            <div class="text-[11px] text-[var(--text-muted)] mt-1 flex items-center justify-between">
+              <span>สัดส่วนเงินต้น</span>
+              <span id="badgePrincipalRatio" class="text-[var(--text-main)] font-mono font-medium">0%</span>
+            </div>
+          </div>
+
+          <!-- Card 2: Net Profit Nominal -->
+          <div class="card-glass rounded-2xl p-4 flex flex-col justify-between">
+            <div class="flex items-center justify-between text-xs mb-1">
+              <span class="font-medium text-[var(--accent-indigo)]">กำไรสุทธิรวม</span>
+              <i data-lucide="trending-up" class="w-3.5 h-3.5 text-[var(--accent-indigo)]"></i>
+            </div>
+            <div id="cardNetProfit" class="text-xl sm:text-2xl font-bold text-[var(--accent-indigo)] font-mono tracking-tight">฿0</div>
+            <div class="text-[11px] text-[var(--text-muted)] mt-1 flex items-center justify-between">
+              <span>Net Profit Ratio</span>
+              <span id="cardNetProfitRatio" class="text-[var(--accent-indigo)] font-mono font-semibold">+0.0%</span>
+            </div>
+          </div>
+
+          <!-- Card 3: CAGR Metric -->
+          <div class="card-glass rounded-2xl p-4 flex flex-col justify-between">
+            <div class="flex items-center justify-between text-xs mb-1">
+              <span class="font-medium text-[var(--accent-emerald)]">ผลตอบแทนเฉลี่ย CAGR</span>
+              <i data-lucide="gauge" class="w-3.5 h-3.5 text-[var(--accent-emerald)]"></i>
+            </div>
+            <div id="cardCAGR" class="text-xl sm:text-2xl font-bold text-[var(--accent-emerald)] font-mono tracking-tight">0.0%</div>
+            <div class="text-[11px] text-[var(--text-muted)] mt-1 flex items-center justify-between">
+              <span>อัตราเติบโตทบต้น</span>
+              <span class="font-mono text-[10px]">ต่อปี</span>
+            </div>
+          </div>
+
+          <!-- Card 4: Final Nominal Value -->
+          <div class="card-glass rounded-2xl p-4 flex flex-col justify-between border-indigo-500/40 relative overflow-hidden">
+            <div class="flex items-center justify-between text-xs mb-1">
+              <span class="font-medium text-indigo-500">มูลค่าพอร์ต Nominal</span>
+              <i data-lucide="award" class="w-3.5 h-3.5 text-indigo-500"></i>
+            </div>
+            <div id="cardNominalValue" class="text-xl sm:text-2xl font-extrabold text-[var(--text-main)] font-mono tracking-tight">฿0</div>
+            <div class="text-[11px] text-[var(--text-muted)] mt-1">มูลค่าบัญชีเมื่อครบกำหนด</div>
+          </div>
+
+          <!-- Card 5: Real Purchasing Power -->
+          <div class="card-glass rounded-2xl p-4 flex flex-col justify-between border-emerald-500/40 relative overflow-hidden">
+            <div class="flex items-center justify-between text-xs mb-1">
+              <span class="font-medium text-[var(--accent-emerald)]">มูลค่าแท้จริง Real</span>
+              <i data-lucide="shield-check" class="w-3.5 h-3.5 text-[var(--accent-emerald)]"></i>
+            </div>
+            <div id="cardRealValue" class="text-xl sm:text-2xl font-extrabold text-[var(--accent-emerald)] font-mono tracking-tight">฿0</div>
+            <div class="text-[11px] text-[var(--text-muted)] mt-1">อำนาจซื้อเทียบเงินปัจจุบัน</div>
+          </div>
+
+          <!-- Card 6: Inflation Drag Loss -->
+          <div class="card-glass rounded-2xl p-4 flex flex-col justify-between col-span-2 sm:col-span-1">
+            <div class="flex items-center justify-between text-xs mb-1">
+              <span class="font-medium text-amber-500">เงินเฟ้อลดทอน (Drag)</span>
+              <i data-lucide="flame" class="w-3.5 h-3.5 text-amber-500"></i>
+            </div>
+            <div id="cardInflationLoss" class="text-xl sm:text-2xl font-bold text-amber-500 font-mono tracking-tight">-฿0</div>
+            <div class="text-[11px] text-[var(--text-muted)] mt-1 flex items-center justify-between">
+              <span>อำนาจซื้อที่สูญไป</span>
+              <span id="cardInflationLossPercent" class="text-amber-500 font-mono text-[10px]">0%</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Main Display Container with Tab Navigation -->
+        <div class="card-glass rounded-3xl p-5 sm:p-6 space-y-4">
+          
+          <!-- View Navigation Tabs & Action Bar -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[var(--border-color)] gap-3">
+            
+            <!-- Tabs -->
+            <div class="flex items-center p-1 bg-[var(--bg-input)] rounded-2xl border border-[var(--border-color)]">
+              <button 
+                type="button" 
+                id="tabBtnChart" 
+                onclick="UIController.switchView('chart')"
+                class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all bg-indigo-600 text-white shadow-sm"
+              >
+                <i data-lucide="line-chart" class="w-4 h-4"></i>
+                <span>Chart View (กราฟ 3 มิติ)</span>
+              </button>
+              <button 
+                type="button" 
+                id="tabBtnTable" 
+                onclick="UIController.switchView('table')"
+                class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all text-[var(--text-muted)] hover:text-[var(--text-main)]"
+              >
+                <i data-lucide="table-2" class="w-4 h-4"></i>
+                <span>Table View (ตารางแจกแจง)</span>
+              </button>
+            </div>
+
+            <!-- Export to CSV Button -->
+            <button 
+              type="button" 
+              onclick="UIController.exportCSV()" 
+              class="px-3.5 py-2 bg-[var(--bg-surface)] hover:bg-[var(--bg-input)] text-[var(--text-main)] border border-[var(--border-color)] rounded-xl text-xs font-medium flex items-center justify-center gap-2 transition-all shadow-sm"
+            >
+              <i data-lucide="download" class="w-3.5 h-3.5 text-emerald-500"></i>
+              <span>Export to CSV</span>
+            </button>
+          </div>
+
+          <!-- 1. CHART VIEW -->
+          <div id="viewChartContainer" class="space-y-3">
+            <div class="flex flex-wrap items-center justify-between text-xs text-[var(--text-muted)] gap-2">
+              <div class="flex items-center gap-3">
+                <span class="flex items-center gap-1.5">
+                  <span class="w-2.5 h-2.5 rounded-full bg-slate-400"></span> เงินต้น
+                </span>
+                <span class="flex items-center gap-1.5 text-indigo-500 font-medium">
+                  <span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span> มูลค่าพอร์ต (Nominal)
+                </span>
+                <span class="flex items-center gap-1.5 text-emerald-500 font-medium">
+                  <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> อำนาจซื้อจริง (Real)
+                </span>
+              </div>
+              <span class="text-[11px] font-mono text-[var(--text-sub)]">ทบต้นรายเดือน</span>
+            </div>
+
+            <div class="relative w-full h-[330px] sm:h-[380px]">
+              <canvas id="financialChartCanvas"></canvas>
+            </div>
+            
+            <p class="text-[11px] text-[var(--text-muted)] text-center">
+              💡 ชี้เมาส์หรือแตะที่จุดบนกราฟเพื่อดูมูลค่าเปรียบเทียบและผลกระทบของเงินเฟ้อในแต่ละปี
+            </p>
+          </div>
+
+          <!-- 2. TABLE VIEW -->
+          <div id="viewTableContainer" class="hidden space-y-3">
+            <div class="flex items-center justify-between text-xs text-[var(--text-muted)]">
+              <span>ตารางแจกแจงผลตอบแทนรายปีตลอดอายุการลงทุน</span>
+              <span id="tableRowsCount" class="font-mono text-indigo-500 font-semibold">0 รายการ</span>
+            </div>
+
+            <div class="overflow-x-auto max-h-[380px] overflow-y-auto border border-[var(--border-color)] rounded-2xl">
+              <table class="w-full text-xs text-left">
+                <thead class="text-[11px] uppercase bg-[var(--bg-input)] text-[var(--text-muted)] sticky top-0 border-b border-[var(--border-color)] backdrop-blur-md">
+                  <tr>
+                    <th class="py-2.5 px-3">ปีที่</th>
+                    <th class="py-2.5 px-3 text-right">เงินต้นสะสม</th>
+                    <th class="py-2.5 px-3 text-right">ดอกเบี้ยปีนั้น</th>
+                    <th class="py-2.5 px-3 text-right text-indigo-500">มูลค่ารวม (Nominal)</th>
+                    <th class="py-2.5 px-3 text-right text-emerald-500">มูลค่าแท้จริง (Real)</th>
+                    <th class="py-2.5 px-3 text-right text-amber-500">เงินเฟ้อลดทอน</th>
+                  </tr>
+                </thead>
+                <tbody id="tableBodyContent" class="divide-y divide-[var(--border-color)] font-mono text-[var(--text-main)]">
+                  <!-- Dynamically populated via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <footer class="pt-4 border-t border-[var(--border-color)] flex flex-col sm:flex-row items-center justify-between text-xs text-[var(--text-muted)] gap-2">
+      <div class="flex items-center gap-1.5">
+        <i data-lucide="shield" class="w-3.5 h-3.5 text-indigo-500"></i>
+        <span>DCA Wealth Pro Analytics • การลงทุนมีความเสี่ยง โปรดศึกษาข้อมูลก่อนตัดสินใจ</span>
+      </div>
+      <div class="text-[11px] font-mono text-[var(--text-sub)]">
+        Modern Financial Dashboard Engine
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- SCRIPT ENGINE (MODULAR JAVASCRIPT) -->
+  <script>
+    /**
+     * =========================================================================
+     * MODULE 0: Theme Manager (Dark/Light Central State & Synchronization)
+     * =========================================================================
+     */
+    const ThemeManager = {
+      storageKey: 'dca_wealth_theme_preference',
+      currentTheme: 'dark',
+
+      init() {
+        const saved = localStorage.getItem(this.storageKey);
+        if (saved === 'light' || saved === 'dark') {
+          this.setTheme(saved, false);
+        } else {
+          const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          this.setTheme(prefersDark ? 'dark' : 'light', false);
+        }
+
+        // Listen for system theme changes if not overridden
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+          if (!localStorage.getItem(this.storageKey)) {
+            this.setTheme(e.matches ? 'dark' : 'light', true);
+          }
+        });
+      },
+
+      setTheme(theme, animate = true) {
+        this.currentTheme = theme;
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem(this.storageKey, theme);
+        this.updateToggleUI();
+
+        // Sync with Chart.js palette if instance exists
+        if (ChartManager && ChartManager.instance) {
+          ChartManager.updateThemePalette(theme);
+        }
+      },
+
+      toggle() {
+        const next = this.currentTheme === 'dark' ? 'light' : 'dark';
+        this.setTheme(next);
+        UIController.showToast(next === 'dark' ? 'สลับเข้าสู่ Dark Mode' : 'สลับเข้าสู่ Light Mode', 'info');
+      },
+
+      updateToggleUI() {
+        const isDark = this.currentTheme === 'dark';
+        const thumb = document.getElementById('themeToggleThumb');
+        const icon = document.getElementById('themeThumbIcon');
+        const label = document.getElementById('themeLabelText');
+
+        if (thumb && icon && label) {
+          if (isDark) {
+            thumb.style.transform = 'translateX(20px)';
+            thumb.style.backgroundColor = '#818CF8';
+            icon.setAttribute('data-lucide', 'moon');
+            label.textContent = 'โหมดมืด';
+          } else {
+            thumb.style.transform = 'translateX(0px)';
+            thumb.style.backgroundColor = '#F59E0B';
+            icon.setAttribute('data-lucide', 'sun');
+            label.textContent = 'โหมดสว่าง';
+          }
+          if (window.lucide) window.lucide.createIcons();
+        }
+      }
+    };
+
+    /**
+     * =========================================================================
+     * MODULE 1: Financial Calculator Engine (Pure Logic)
+     * =========================================================================
+     */
+    const FinancialEngine = {
+      calculate(params) {
+        const { initialDeposit, monthlyDeposit, years, annualReturn, inflationRate } = params;
+        
+        const monthlyRate = (annualReturn / 100) / 12;
+        const totalMonths = years * 12;
+
+        let currentNominalBalance = initialDeposit;
+        let totalInvested = initialDeposit;
+        let previousYearEndNominal = initialDeposit;
+
+        const labels = ['ปีที่ 0'];
+        const principalSeries = [initialDeposit];
+        const nominalSeries = [initialDeposit];
+        const realSeries = [initialDeposit];
+
+        const schedule = [{
+          year: 0,
+          principal: initialDeposit,
+          yearlyInterest: 0,
+          totalNominal: initialDeposit,
+          totalReal: initialDeposit,
+          inflationLoss: 0
+        }];
+
+        for (let m = 1; m <= totalMonths; m++) {
+          // Annuity Due: ฝากต้นงวดได้รับดอกเบี้ยเดือนนั้น
+          currentNominalBalance = (currentNominalBalance + monthlyDeposit) * (1 + monthlyRate);
+          totalInvested += monthlyDeposit;
+
+          if (m % 12 === 0) {
+            const currentYear = m / 12;
+
+            const addedThisYear = monthlyDeposit * 12;
+            const yearlyInterestEarned = currentNominalBalance - previousYearEndNominal - addedThisYear;
+            previousYearEndNominal = currentNominalBalance;
+
+            const inflationDiscount = Math.pow(1 + (inflationRate / 100), currentYear);
+            const currentRealBalance = currentNominalBalance / inflationDiscount;
+            const inflationLoss = currentNominalBalance - currentRealBalance;
+
+            labels.push(`ปีที่ ${currentYear}`);
+            principalSeries.push(Math.round(totalInvested));
+            nominalSeries.push(Math.round(currentNominalBalance));
+            realSeries.push(Math.round(currentRealBalance));
+
+            schedule.push({
+              year: currentYear,
+              principal: totalInvested,
+              yearlyInterest: yearlyInterestEarned,
+              totalNominal: currentNominalBalance,
+              totalReal: currentRealBalance,
+              inflationLoss: inflationLoss
+            });
+          }
+        }
+
+        const finalNominal = currentNominalBalance;
+        const finalPrincipal = totalInvested;
+        const finalGain = finalNominal - finalPrincipal;
+        const finalReal = schedule[schedule.length - 1].totalReal;
+        const finalLoss = finalNominal - finalReal;
+
+        const netProfitRatio = finalPrincipal > 0 ? (finalGain / finalPrincipal) * 100 : 0;
+
+        let cagr = 0;
+        if (finalPrincipal > 0 && years > 0) {
+          cagr = (Math.pow(finalNominal / finalPrincipal, 1 / years) - 1) * 100;
+        }
+
+        return {
+          finalNominal,
+          finalPrincipal,
+          finalGain,
+          finalReal,
+          finalLoss,
+          netProfitRatio,
+          cagr,
+          labels,
+          principalSeries,
+          nominalSeries,
+          realSeries,
+          schedule
+        };
+      }
+    };
+
+    /**
+     * =========================================================================
+     * MODULE 2: Chart Manager (Dynamic Palette & Overlap Prevention)
+     * =========================================================================
+     */
+    const ChartManager = {
+      instance: null,
+      cachedData: null,
+
+      getPalette(theme) {
+        const isDark = theme === 'dark';
+        return {
+          gridColor: isDark ? 'rgba(51, 65, 85, 0.25)' : 'rgba(226, 232, 240, 0.85)',
+          textColor: isDark ? '#94A3B8' : '#475569',
+          tooltipBg: isDark ? 'rgba(15, 23, 42, 0.96)' : 'rgba(255, 255, 255, 0.98)',
+          tooltipBorder: isDark ? 'rgba(51, 65, 85, 0.8)' : '#CBD5E1',
+          tooltipTitle: isDark ? '#F8FAFC' : '#0F172A',
+          gradNominalStart: isDark ? 'rgba(99, 102, 241, 0.35)' : 'rgba(79, 70, 229, 0.25)',
+          gradRealStart: isDark ? 'rgba(16, 185, 129, 0.25)' : 'rgba(5, 150, 105, 0.20)',
+          principalLineColor: isDark ? '#64748B' : '#94A3B8'
+        };
+      },
+
+      render(labels, principalSeries, nominalSeries, realSeries) {
+        this.cachedData = { labels, principalSeries, nominalSeries, realSeries };
+        const canvas = document.getElementById('financialChartCanvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+
+        // ป้องกันบั๊กกราฟซ้อนทับกัน
+        if (this.instance) {
+          this.instance.destroy();
+          this.instance = null;
+        }
+
+        const palette = this.getPalette(ThemeManager.currentTheme);
+
+        // Gradients
+        const gradNominal = ctx.createLinearGradient(0, 0, 0, 360);
+        gradNominal.addColorStop(0, palette.gradNominalStart);
+        gradNominal.addColorStop(1, 'rgba(99, 102, 241, 0.0)');
+
+        const gradReal = ctx.createLinearGradient(0, 0, 0, 360);
+        gradReal.addColorStop(0, palette.gradRealStart);
+        gradReal.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+
+        this.instance = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                label: 'มูลค่าพอร์ต (Nominal)',
+                data: nominalSeries,
+                borderColor: '#6366F1',
+                backgroundColor: gradNominal,
+                borderWidth: 2.8,
+                fill: true,
+                tension: 0.35,
+                pointRadius: labels.length > 25 ? 0 : 3.5,
+                pointHoverRadius: 6,
+                pointBackgroundColor: '#6366F1',
+                pointBorderColor: ThemeManager.currentTheme === 'dark' ? '#0B0F19' : '#FFFFFF',
+                pointBorderWidth: 2,
+                order: 1
+              },
+              {
+                label: 'มูลค่าแท้จริง (Real)',
+                data: realSeries,
+                borderColor: '#10B981',
+                backgroundColor: gradReal,
+                borderWidth: 2.5,
+                fill: true,
+                tension: 0.35,
+                pointRadius: labels.length > 25 ? 0 : 3.5,
+                pointHoverRadius: 6,
+                pointBackgroundColor: '#10B981',
+                pointBorderColor: ThemeManager.currentTheme === 'dark' ? '#0B0F19' : '#FFFFFF',
+                pointBorderWidth: 2,
+                order: 2
+              },
+              {
+                label: 'เงินต้นสะสม (Principal)',
+                data: principalSeries,
+                borderColor: palette.principalLineColor,
+                borderWidth: 2,
+                borderDash: [5, 5],
+                fill: false,
+                tension: 0,
+                pointRadius: 0,
+                pointHoverRadius: 5,
+                pointBackgroundColor: palette.principalLineColor,
+                order: 3
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+              mode: 'index',
+              intersect: false,
+            },
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                backgroundColor: palette.tooltipBg,
+                titleColor: palette.tooltipTitle,
+                titleFont: { family: 'Prompt', size: 13, weight: '600' },
+                bodyColor: palette.tooltipTitle,
+                bodyFont: { family: 'JetBrains Mono', size: 12 },
+                borderColor: palette.tooltipBorder,
+                borderWidth: 1,
+                padding: 12,
+                boxPadding: 6,
+                usePointStyle: true,
+                callbacks: {
+                  label: function(context) {
+                    return ` ${context.dataset.label}: ฿${context.parsed.y.toLocaleString('th-TH')}`;
+                  },
+                  footer: function(tooltipItems) {
+                    if (tooltipItems.length >= 2) {
+                      const nominal = tooltipItems[0].parsed.y;
+                      const real = tooltipItems[1].parsed.y;
+                      const loss = nominal - real;
+                      return `-------------------------\nสูญเสียจากเงินเฟ้อ: ฿${loss.toLocaleString('th-TH')}`;
+                    }
+                    return '';
+                  }
+                }
+              }
+            },
+            scales: {
+              x: {
+                grid: { color: palette.gridColor },
+                ticks: {
+                  color: palette.textColor,
+                  font: { family: 'Prompt', size: 11 },
+                  maxTicksLimit: 12
+                }
+              },
+              y: {
+                grid: { color: palette.gridColor },
+                ticks: {
+                  color: palette.textColor,
+                  font: { family: 'JetBrains Mono', size: 11 },
+                  callback: function(val) {
+                    if (val >= 1_000_000) return '฿' + (val / 1_000_000).toFixed(1) + 'M';
+                    if (val >= 1_000) return '฿' + (val / 1_000).toFixed(0) + 'k';
+                    return '฿' + val;
+                  }
+                }
+              }
+            }
+          }
+        });
+      },
+
+      updateThemePalette(theme) {
+        if (!this.instance || !this.cachedData) return;
+        const { labels, principalSeries, nominalSeries, realSeries } = this.cachedData;
+        this.render(labels, principalSeries, nominalSeries, realSeries);
+      }
+    };
+
+    /**
+     * =========================================================================
+     * MODULE 3: UI Controller & Application Orchestrator
+     * =========================================================================
+     */
+    const UIController = {
+      storageKey: 'dca_wealth_pro_user_inputs_v2',
+      currentSchedule: [],
+      currentView: 'chart',
+
+      init() {
+        ThemeManager.init();
+        this.bindEvents();
+        this.loadState();
+        this.recalculate();
+        if (window.lucide) {
+          window.lucide.createIcons();
+        }
+      },
+
+      showToast(message, type = 'error') {
+        const container = document.getElementById('toastContainer');
+        if (!container) return;
+
+        const toast = document.createElement('div');
+        const isDark = ThemeManager.currentTheme === 'dark';
+        
+        let colorClasses = '';
+        if (type === 'error') {
+          colorClasses = isDark 
+            ? 'bg-rose-950/90 text-rose-200 border-rose-500/50 shadow-rose-950/40' 
+            : 'bg-rose-50 text-rose-800 border-rose-200 shadow-rose-900/10';
+        } else if (type === 'success') {
+          colorClasses = isDark 
+            ? 'bg-emerald-950/90 text-emerald-200 border-emerald-500/50 shadow-emerald-950/40' 
+            : 'bg-emerald-50 text-emerald-800 border-emerald-200 shadow-emerald-900/10';
+        } else {
+          colorClasses = isDark 
+            ? 'bg-indigo-950/90 text-indigo-200 border-indigo-500/50 shadow-indigo-950/40' 
+            : 'bg-indigo-50 text-indigo-800 border-indigo-200 shadow-indigo-900/10';
+        }
+
+        toast.className = `toast-animate px-4 py-2.5 rounded-2xl border text-xs sm:text-sm font-medium shadow-xl flex items-center gap-2.5 pointer-events-auto transition-all duration-300 backdrop-blur-md ${colorClasses}`;
+        
+        let iconName = 'alert-circle';
+        if (type === 'success') iconName = 'check-circle';
+        if (type === 'info') iconName = 'info';
+
+        toast.innerHTML = `
+          <i data-lucide="${iconName}" class="w-4 h-4 flex-shrink-0"></i>
+          <span>${message}</span>
+        `;
+        
+        container.appendChild(toast);
+        if (window.lucide) window.lucide.createIcons();
+
+        setTimeout(() => {
+          toast.style.opacity = '0';
+          toast.style.transform = 'translateY(-10px) scale(0.95)';
+          setTimeout(() => toast.remove(), 300);
+        }, 3400);
+      },
+
+      bindEvents() {
+        const fields = ['initialDeposit', 'monthlyDeposit', 'investmentYears', 'annualReturn', 'inflationRate'];
+        
+        fields.forEach(field => {
+          const input = document.getElementById(field);
+          const slider = document.getElementById(field + 'Slider');
+
+          if (input && slider) {
+            input.addEventListener('input', () => {
+              slider.value = input.value;
+              this.handleInputChange();
+            });
+
+            slider.addEventListener('input', () => {
+              input.value = slider.value;
+              this.handleInputChange();
+            });
+          }
+        });
+      },
+
+      handleInputChange() {
+        const isValid = this.validateInputs();
+        if (isValid) {
+          this.saveState();
+          this.recalculate();
+        }
+      },
+
+      validateInputs() {
+        const p0 = parseFloat(document.getElementById('initialDeposit').value);
+        const pmt = parseFloat(document.getElementById('monthlyDeposit').value);
+        const years = parseInt(document.getElementById('investmentYears').value);
+        const ret = parseFloat(document.getElementById('annualReturn').value);
+        const inf = parseFloat(document.getElementById('inflationRate').value);
+
+        if (isNaN(p0) || p0 < 0) {
+          this.showToast('กรุณากรอกเงินลงทุนเริ่มต้นที่มากกว่าหรือเท่ากับ 0 บาท');
+          return false;
+        }
+        if (isNaN(pmt) || pmt < 0) {
+          this.showToast('กรุณากรอกเงินลงทุนรายเดือนที่ถูกต้อง');
+          return false;
+        }
+        if (isNaN(years) || years < 1 || years > 50) {
+          this.showToast('ระยะเวลาลงทุนต้องอยู่ระหว่าง 1 ถึง 50 ปี');
+          return false;
+        }
+        if (isNaN(ret) || ret < 0 || ret > 100) {
+          this.showToast('ผลตอบแทนคาดหวังต้องอยู่ระหว่าง 0% ถึง 100%');
+          return false;
+        }
+        if (isNaN(inf) || inf < 0 || inf > 30) {
+          this.showToast('อัตราเงินเฟ้อต้องอยู่ระหว่าง 0% ถึง 30%');
+          return false;
+        }
+
+        return true;
+      },
+
+      getParams() {
+        return {
+          initialDeposit: parseFloat(document.getElementById('initialDeposit').value) || 0,
+          monthlyDeposit: parseFloat(document.getElementById('monthlyDeposit').value) || 0,
+          years: Math.max(1, parseInt(document.getElementById('investmentYears').value) || 1),
+          annualReturn: parseFloat(document.getElementById('annualReturn').value) || 0,
+          inflationRate: parseFloat(document.getElementById('inflationRate').value) || 0
+        };
+      },
+
+      saveState() {
+        try {
+          const params = this.getParams();
+          localStorage.setItem(this.storageKey, JSON.stringify(params));
+        } catch (e) {
+          console.warn('localStorage unavailable', e);
+        }
+      },
+
+      loadState() {
+        try {
+          const saved = localStorage.getItem(this.storageKey);
+          if (saved) {
+            const data = JSON.parse(saved);
+            Object.keys(data).forEach(key => {
+              const input = document.getElementById(key);
+              const slider = document.getElementById(key + 'Slider');
+              if (input) input.value = data[key];
+              if (slider) slider.value = data[key];
+            });
+          }
+        } catch (e) {
+          console.warn('Failed to parse configuration', e);
+        }
+      },
+
+      applyPreset(type) {
+        const presets = {
+          world_index: { initialDeposit: 50000, monthlyDeposit: 10000, investmentYears: 20, annualReturn: 8.0, inflationRate: 2.5 },
+          growth_tech: { initialDeposit: 100000, monthlyDeposit: 15000, investmentYears: 15, annualReturn: 12.0, inflationRate: 3.0 },
+          conservative: { initialDeposit: 100000, monthlyDeposit: 8000, investmentYears: 10, annualReturn: 4.5, inflationRate: 2.0 }
+        };
+
+        const config = presets[type];
+        if (config) {
+          Object.keys(config).forEach(k => {
+            const input = document.getElementById(k);
+            const slider = document.getElementById(k + 'Slider');
+            if (input) input.value = config[k];
+            if (slider) slider.value = config[k];
+          });
+          this.saveState();
+          this.recalculate();
+          this.showToast('โหลดการตั้งค่ากลยุทธ์สำเร็จ', 'success');
+        }
+      },
+
+      resetDefaults() {
+        this.applyPreset('world_index');
+      },
+
+      switchView(viewName) {
+        this.currentView = viewName;
+        const chartContainer = document.getElementById('viewChartContainer');
+        const tableContainer = document.getElementById('viewTableContainer');
+        const tabBtnChart = document.getElementById('tabBtnChart');
+        const tabBtnTable = document.getElementById('tabBtnTable');
+
+        if (viewName === 'chart') {
+          chartContainer.classList.remove('hidden');
+          tableContainer.classList.add('hidden');
+          tabBtnChart.className = 'flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all bg-indigo-600 text-white shadow-sm';
+          tabBtnTable.className = 'flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all text-[var(--text-muted)] hover:text-[var(--text-main)]';
+          if (ChartManager.instance) {
+            ChartManager.instance.resize();
+          }
+        } else {
+          chartContainer.classList.add('hidden');
+          tableContainer.classList.remove('hidden');
+          tabBtnTable.className = 'flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all bg-indigo-600 text-white shadow-sm';
+          tabBtnChart.className = 'flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all text-[var(--text-muted)] hover:text-[var(--text-main)]';
+        }
+      },
+
+      formatBaht(num) {
+        return '฿' + Math.round(num).toLocaleString('th-TH');
+      },
+
+      recalculate() {
+        const params = this.getParams();
+        document.getElementById('badgeYearlyDeposit').textContent = this.formatBaht(params.monthlyDeposit * 12);
+
+        const res = FinancialEngine.calculate(params);
+        this.currentSchedule = res.schedule;
+
+        document.getElementById('cardTotalInvested').textContent = this.formatBaht(res.finalPrincipal);
+        document.getElementById('cardNetProfit').textContent = (res.finalGain >= 0 ? '+' : '') + this.formatBaht(res.finalGain);
+        document.getElementById('cardNetProfitRatio').textContent = (res.netProfitRatio >= 0 ? '+' : '') + res.netProfitRatio.toFixed(1) + '%';
+        document.getElementById('cardCAGR').textContent = res.cagr.toFixed(2) + '%';
+        
+        const principalRatio = res.finalNominal > 0 ? ((res.finalPrincipal / res.finalNominal) * 100).toFixed(0) : 0;
+        document.getElementById('badgePrincipalRatio').textContent = `${principalRatio}% ของพอร์ต`;
+
+        document.getElementById('cardNominalValue').textContent = this.formatBaht(res.finalNominal);
+        document.getElementById('cardRealValue').textContent = this.formatBaht(res.finalReal);
+        document.getElementById('cardInflationLoss').textContent = '-' + this.formatBaht(res.finalLoss);
+
+        const inflationLossPercent = res.finalNominal > 0 ? ((res.finalLoss / res.finalNominal) * 100).toFixed(0) : 0;
+        document.getElementById('cardInflationLossPercent').textContent = `หายไป ${inflationLossPercent}%`;
+
+        this.renderTable(res.schedule);
+        ChartManager.render(res.labels, res.principalSeries, res.nominalSeries, res.realSeries);
+      },
+
+      renderTable(schedule) {
+        const tbody = document.getElementById('tableBodyContent');
+        const countSpan = document.getElementById('tableRowsCount');
+        if (!tbody) return;
+
+        tbody.innerHTML = '';
+        if (countSpan) countSpan.textContent = `${schedule.length} ปีการลงทุน`;
+
+        schedule.forEach(row => {
+          const tr = document.createElement('tr');
+          tr.className = 'hover:bg-indigo-500/5 transition-colors border-b border-[var(--border-color)]';
+          tr.innerHTML = `
+            <td class="py-2.5 px-3 font-sans font-medium text-[var(--text-main)]">${row.year === 0 ? 'เริ่มต้น' : 'ปีที่ ' + row.year}</td>
+            <td class="py-2.5 px-3 text-right text-[var(--text-muted)]">${this.formatBaht(row.principal)}</td>
+            <td class="py-2.5 px-3 text-right ${row.yearlyInterest >= 0 ? 'text-indigo-500' : 'text-rose-500'}">${(row.yearlyInterest >= 0 ? '+' : '') + this.formatBaht(row.yearlyInterest)}</td>
+            <td class="py-2.5 px-3 text-right text-indigo-500 font-semibold">${this.formatBaht(row.totalNominal)}</td>
+            <td class="py-2.5 px-3 text-right text-emerald-500 font-semibold">${this.formatBaht(row.totalReal)}</td>
+            <td class="py-2.5 px-3 text-right text-amber-500">-${this.formatBaht(row.inflationLoss)}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      },
+
+      exportCSV() {
+        if (!this.currentSchedule || this.currentSchedule.length === 0) {
+          this.showToast('ไม่มีข้อมูลสำหรับส่งออก');
+          return;
+        }
+
+        let csv = 'ปีที่,เงินต้นสะสม (บาท),ดอกเบี้ยเฉพาะปีนั้น (บาท),มูลค่ารวม Nominal (บาท),มูลค่าแท้จริง Real (บาท),เงินเฟ้อลดทอน (บาท)\n';
+        
+        this.currentSchedule.forEach(row => {
+          csv += `${row.year},${Math.round(row.principal)},${Math.round(row.yearlyInterest)},${Math.round(row.totalNominal)},${Math.round(row.totalReal)},${Math.round(row.inflationLoss)}\n`;
+        });
+
+        const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `dca_wealth_analytics_${new Date().toISOString().slice(0, 10)}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        this.showToast('ส่งออกไฟล์ CSV สำเร็จ', 'success');
+      }
+    };
+
+    window.addEventListener('DOMContentLoaded', () => {
+      UIController.init();
+    });
+  </script>
+</body>
+</html>
